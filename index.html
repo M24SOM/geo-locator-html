@@ -68,7 +68,9 @@
     <img class="logo" src="https://erp.degaandhowr.com/files/degaandhowrLogo.png" alt="Degaandhowr Logo" />
     <h2>Branch Locator</h2>
     
-    <select id="item-select"></select>
+    <select id="item-select">
+      <option disabled selected>Loading branches...</option>
+    </select>
     <button onclick="submitSelection()">Submit Location</button>
   </div>
 
@@ -81,27 +83,27 @@
     const FETCH_API = "https://erp.degaandhowr.com/api/method/api.api.webhooks.geo.get_xarumaha";
     const POST_API = "https://erp.degaandhowr.com/api/method/api.api.webhooks.geo.update_xarumaha_location";
 
-    // Load and filter items dynamically
-    $('#item-select').select2({
-      placeholder: 'Search for a branch...',
-      minimumInputLength: 2,
-      ajax: {
-        transport: function (params, success, failure) {
-          fetch(FETCH_API)
-            .then(res => res.json())
-            .then(data => {
-              const searchTerm = params.data.q.toLowerCase();
-              const options = data.message?.data?.filter(item =>
-                item.name.toLowerCase().includes(searchTerm)
-              ).map(item => ({
-                id: item.name,
-                text: item.name
-              }));
-              success({ results: options });
-            })
-            .catch(failure);
-        },
-        delay: 250
+    // Fetch and populate dropdown on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const response = await fetch(FETCH_API);
+        const data = await response.json();
+        const items = data.message?.data || [];
+
+        const select = $('#item-select');
+        select.empty(); // clear loading option
+        items.forEach(item => {
+          select.append(new Option(item.name, item.name));
+        });
+
+        // Enable Select2
+        select.select2({
+          placeholder: 'Search for a branch...',
+          allowClear: true
+        });
+      } catch (err) {
+        console.error("Error loading branches:", err);
+        alert("Failed to load branch list.");
       }
     });
 
